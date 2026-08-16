@@ -480,7 +480,7 @@ with tab2:
         tot_kerja = tot_kegiatan - tot_libur
         
         total_jam_kerja = tot_kerja * 9.5
-        progress_val = min(tot_minggu / 20.0, 1.0)
+        progress_val = min(tot_minggu / 22.0, 1.0)
         
         with st.container(border=True):
             st.markdown("#### 📊 Ringkasan Eksekutif & Jam Kerja")
@@ -489,7 +489,7 @@ with tab2:
             m_col2.metric("Hari Kerja Efektif", f"{tot_kerja} Hari")
             m_col3.metric("Akumulasi Jam Kerja", f"{total_jam_kerja:g} Jam", help="Dihitung dari 07.30 s.d. 17.00 (9,5 Jam per hari efektif)")
             m_col4.metric("Izin / Libur", f"{tot_libur} Hari")
-            st.progress(progress_val, text=f"Estimasi Penyelesaian Program: {int(progress_val*100)}% (Berdasarkan target 20 Minggu)")
+            st.progress(progress_val, text=f"Estimasi Penyelesaian Program: {int(progress_val*100)}% (Berdasarkan target 22 Minggu)")
         
         st.markdown("<br>", unsafe_allow_html=True)
 
