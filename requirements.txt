@@ -2,3 +2,4 @@ streamlit
 Pillow
 python-docx
 pandas
+pytz

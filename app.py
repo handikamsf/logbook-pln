@@ -12,6 +12,7 @@ from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import parse_xml
 from datetime import datetime
+import pytz
 
 # ================= KONFIGURASI HALAMAN =================
 st.set_page_config(
@@ -297,7 +298,8 @@ def set_cell_background(cell, color_hex):
     shading_elm = parse_xml(f'<w:shd xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" w:fill="{color_hex}"/>')
     cell._tc.get_or_add_tcPr().append(shading_elm)
 
-# ================= DATA WAKTU =================
+# ================= DATA WAKTU & ZONA WAKTU WIB =================
+tz_wib = pytz.timezone('Asia/Jakarta')
 hari_indo = ["Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu", "Minggu"]
 bulan_indo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
 
@@ -312,7 +314,8 @@ with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/9/97/Logo_PLN.png", width=100)
     st.markdown("<h2 style='margin-top: 15px;'>⚙️ Control Panel</h2>", unsafe_allow_html=True)
     
-    st.caption(f"🕒 Waktu Sistem: {datetime.now().strftime('%d %b %Y - %H:%M WIB')}")
+    waktu_wib_sidebar = datetime.now(tz_wib)
+    st.caption(f"🕒 Waktu Sistem: {waktu_wib_sidebar.strftime('%d %b %Y - %H:%M WIB')}")
     
     with st.container(border=True):
         st.markdown("**Identitas Mahasiswa**")
@@ -331,7 +334,7 @@ with st.sidebar:
         st.download_button(
             label="⬇️ Backup Database (.db)",
             data=db_bytes,
-            file_name=f"Logbook_DB_Backup_{datetime.now().strftime('%Y%m%d')}.db",
+            file_name=f"Logbook_DB_Backup_{datetime.now(tz_wib).strftime('%Y%m%d')}.db",
             mime="application/octet-stream",
             use_container_width=True
         )
@@ -362,19 +365,21 @@ with tab1:
         col1, col2 = st.columns(2)
 
         with col1:
-            tanggal_input = st.date_input("Kalender Pelaksanaan", value=datetime.today())
+            tanggal_input = st.date_input("Kalender Pelaksanaan", value=datetime.now(tz_wib).date())
             
             with st.container(border=True):
                 st.markdown("<p style='font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color:#cbd5e1;'>⏰ Waktu Sinkronisasi (Watermark)</p>", unsafe_allow_html=True)
                 use_current_time = st.toggle("Otomatis ikuti jam saat ini", value=True)
                 
+                waktu_wib_form = datetime.now(tz_wib)
+                
                 if use_current_time:
-                    waktu_preview = datetime.now().strftime("%H:%M WIB")
+                    waktu_preview = waktu_wib_form.strftime("%H:%M WIB")
                     waktu_str = "AUTO"
                 else:
                     col_j, col_m = st.columns(2)
-                    with col_j: jam = st.selectbox("Jam", options=[f"{i:02d}" for i in range(24)], index=datetime.now().hour)
-                    with col_m: menit = st.selectbox("Menit", options=[f"{i:02d}" for i in range(60)], index=datetime.now().minute)
+                    with col_j: jam = st.selectbox("Jam", options=[f"{i:02d}" for i in range(24)], index=waktu_wib_form.hour)
+                    with col_m: menit = st.selectbox("Menit", options=[f"{i:02d}" for i in range(60)], index=waktu_wib_form.minute)
                     waktu_preview = f"{jam}:{menit} WIB"
                     waktu_str = waktu_preview
             
@@ -448,7 +453,7 @@ with tab1:
                 minggu_key = f"Minggu ke-{minggu_ke}"
                 
                 if waktu_str == "AUTO":
-                    waktu_aktual = datetime.now().strftime("%H:%M WIB")
+                    waktu_aktual = datetime.now(tz_wib).strftime("%H:%M WIB")
                     timestamp_final = f"{tanggal_lengkap} | {waktu_aktual}"
                 else:
                     timestamp_final = f"{tanggal_lengkap} | {waktu_str}"
@@ -480,7 +485,7 @@ with tab2:
         tot_kerja = tot_kegiatan - tot_libur
         
         total_jam_kerja = tot_kerja * 9.5
-        progress_val = min(tot_minggu / 22.0, 1.0)
+        progress_val = min(tot_minggu / 20.0, 1.0)
         
         with st.container(border=True):
             st.markdown("#### 📊 Ringkasan Eksekutif & Jam Kerja")
@@ -489,7 +494,7 @@ with tab2:
             m_col2.metric("Hari Kerja Efektif", f"{tot_kerja} Hari")
             m_col3.metric("Akumulasi Jam Kerja", f"{total_jam_kerja:g} Jam", help="Dihitung dari 07.30 s.d. 17.00 (9,5 Jam per hari efektif)")
             m_col4.metric("Izin / Libur", f"{tot_libur} Hari")
-            st.progress(progress_val, text=f"Estimasi Penyelesaian Program: {int(progress_val*100)}% (Berdasarkan target 22 Minggu)")
+            st.progress(progress_val, text=f"Estimasi Penyelesaian Program: {int(progress_val*100)}% (Berdasarkan target 20 Minggu)")
         
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -498,7 +503,6 @@ with tab2:
             minggu_labels = []
             jumlah_aktivitas = []
             
-            # PERBAIKAN DI SINI: Menggunakan x[0].split('-')[1] untuk tuple items()
             for m_key, items in sorted(db_data.items(), key=lambda x: int(x[0].split('-')[1])):
                 minggu_labels.append(m_key)
                 aktif = sum(1 for i in items if not i['is_libur'])
