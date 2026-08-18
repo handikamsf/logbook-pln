@@ -6,7 +6,7 @@ import sqlite3
 import os
 import pandas as pd
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -142,12 +142,10 @@ def apply_corporate_theme():
         background-color: rgba(15, 23, 42, 0.95) !important;
     }
 
-    /* THE REAL FIX: Memaksa Preview Kamera 16:9 & ANTI-MIRROR */
     [data-testid="stCameraInput"] video {
         aspect-ratio: 16 / 9 !important;
         object-fit: cover !important;
         border-radius: 8px !important;
-        transform: scaleX(1) !important; /* INI YANG MENGHILANGKAN EFEK CERMIN DI LAYAR PREVIEW */
     }
 
     .stButton > button[kind="primary"] {
@@ -422,20 +420,28 @@ with tab1:
                 
                 foto_bytes_list = []
                 
-                st.markdown("**1. Ambil Foto Kamera (Otomatis 16:9 & Anti-Mirror)**")
+                st.markdown("**1. Ambil Foto Kamera (Otomatis Anti-Mirror & 16:9)**")
                 aktifkan_kamera = st.toggle("📷 Nyalakan Kamera", value=False)
                 
                 if aktifkan_kamera:
                     cam_col1, cam_col2 = st.columns(2)
                     with cam_col1:
-                        # Hapus ImageOps, langsung simpan gambarnya secara natural
                         foto_kamera_1 = st.camera_input("Foto Kamera 1", key="cam1")
                         if foto_kamera_1:
-                            foto_bytes_list.append(foto_kamera_1.getvalue())
+                            # Proses Anti-Mirror: membalikkan foto hasil jepretan secara digital
+                            img1 = Image.open(foto_kamera_1)
+                            img1 = ImageOps.mirror(img1)
+                            buf1 = BytesIO()
+                            img1.save(buf1, format="PNG")
+                            foto_bytes_list.append(buf1.getvalue())
                     with cam_col2:
                         foto_kamera_2 = st.camera_input("Foto Kamera 2", key="cam2")
                         if foto_kamera_2:
-                            foto_bytes_list.append(foto_kamera_2.getvalue())
+                            img2 = Image.open(foto_kamera_2)
+                            img2 = ImageOps.mirror(img2)
+                            buf2 = BytesIO()
+                            img2.save(buf2, format="PNG")
+                            foto_bytes_list.append(buf2.getvalue())
                 else:
                     st.info("Kamera dinonaktifkan untuk menghemat daya. Nyalakan sakelar di atas untuk mulai berswafoto.")
                 
@@ -450,7 +456,7 @@ with tab1:
                 if is_libur:
                     st.info("ℹ️ Dokumen visual tidak diwajibkan untuk hari libur.")
                 else:
-                    st.caption("✨ **Keterangan:** Layar kamera kini tidak seperti cermin lagi, sehingga teks apapun akan terbaca normal sebelum dan sesudah dijepret.")
+                    st.caption("✨ **Keterangan Cerdas:** Foto hasil kamera akan dibalik (*Anti-Mirror*) agar teks terbaca normal. Selain itu, *Auto-Crop 16:9* akan merapikan semua foto secara proporsional.")
 
         st.markdown("<br>", unsafe_allow_html=True)
         
