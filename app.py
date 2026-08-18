@@ -142,10 +142,12 @@ def apply_corporate_theme():
         background-color: rgba(15, 23, 42, 0.95) !important;
     }
 
+    /* THE REAL FIX: Memaksa Preview Kamera 16:9 & ANTI-MIRROR */
     [data-testid="stCameraInput"] video {
         aspect-ratio: 16 / 9 !important;
         object-fit: cover !important;
         border-radius: 8px !important;
+        transform: scaleX(1) !important; /* INI YANG MENGHILANGKAN EFEK CERMIN DI LAYAR PREVIEW */
     }
 
     .stButton > button[kind="primary"] {
@@ -420,12 +422,13 @@ with tab1:
                 
                 foto_bytes_list = []
                 
-                st.markdown("**1. Ambil Foto Kamera (Otomatis 16:9)**")
+                st.markdown("**1. Ambil Foto Kamera (Otomatis 16:9 & Anti-Mirror)**")
                 aktifkan_kamera = st.toggle("📷 Nyalakan Kamera", value=False)
                 
                 if aktifkan_kamera:
                     cam_col1, cam_col2 = st.columns(2)
                     with cam_col1:
+                        # Hapus ImageOps, langsung simpan gambarnya secara natural
                         foto_kamera_1 = st.camera_input("Foto Kamera 1", key="cam1")
                         if foto_kamera_1:
                             foto_bytes_list.append(foto_kamera_1.getvalue())
@@ -447,7 +450,7 @@ with tab1:
                 if is_libur:
                     st.info("ℹ️ Dokumen visual tidak diwajibkan untuk hari libur.")
                 else:
-                    st.caption("✨ **Auto-Crop 16:9 Aktif:** Semua orientasi foto akan dipotong otomatis secara presisi menjadi format Widescreen (16:9) agar terlihat proporsional di dokumen Word.")
+                    st.caption("✨ **Keterangan:** Layar kamera kini tidak seperti cermin lagi, sehingga teks apapun akan terbaca normal sebelum dan sesudah dijepret.")
 
         st.markdown("<br>", unsafe_allow_html=True)
         
@@ -588,7 +591,6 @@ with tab2:
                                     st.caption(f"**{item['tanggal']}**")
                                     fotos = item.get("foto_b64_list", [])
                                     if fotos:
-                                        # Menampilkan 2 foto sejajar di web review
                                         for idx_img in range(0, len(fotos), 2):
                                             img_cols = st.columns(2)
                                             with img_cols[0]:
@@ -707,17 +709,13 @@ with tab3:
                             p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                             for idx_img, img_b64 in enumerate(fotos):
                                 run_img = p_img.add_run()
-                                # Memasukkan foto dengan lebar pas untuk 2 gambar berdampingan di Word
                                 run_img.add_picture(base64_to_image(img_b64), width=Inches(2.15)) 
                                 
-                                # Logika Penempatan 2 Foto Per Baris
                                 if idx_img < len(fotos) - 1:
                                     if (idx_img + 1) % 2 == 0:
-                                        # Jika sudah 2 foto, buat baris baru di Word
                                         p_img = keg_cell.add_paragraph()
                                         p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                                     else:
-                                        # Jika baru 1 foto, beri spasi pemisah sebelum foto kedua
                                         run_img.add_text("   ")
                         
                         for cell in row_cells:
