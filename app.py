@@ -422,10 +422,17 @@ with tab1:
                 
                 st.markdown("**1. Ambil Foto Kamera (Otomatis 16:9)**")
                 aktifkan_kamera = st.toggle("📷 Nyalakan Kamera", value=False)
+                
                 if aktifkan_kamera:
-                    foto_kamera = st.camera_input("Lensa Perangkat (Klik tombol Take Photo)")
-                    if foto_kamera:
-                        foto_bytes_list.append(foto_kamera.getvalue())
+                    cam_col1, cam_col2 = st.columns(2)
+                    with cam_col1:
+                        foto_kamera_1 = st.camera_input("Foto Kamera 1", key="cam1")
+                        if foto_kamera_1:
+                            foto_bytes_list.append(foto_kamera_1.getvalue())
+                    with cam_col2:
+                        foto_kamera_2 = st.camera_input("Foto Kamera 2", key="cam2")
+                        if foto_kamera_2:
+                            foto_bytes_list.append(foto_kamera_2.getvalue())
                 else:
                     st.info("Kamera dinonaktifkan untuk menghemat daya. Nyalakan sakelar di atas untuk mulai berswafoto.")
                 
@@ -581,8 +588,14 @@ with tab2:
                                     st.caption(f"**{item['tanggal']}**")
                                     fotos = item.get("foto_b64_list", [])
                                     if fotos:
-                                        for img_b64 in fotos:
-                                            st.image(base64_to_image(img_b64), use_container_width=True)
+                                        # Menampilkan 2 foto sejajar di web review
+                                        for idx_img in range(0, len(fotos), 2):
+                                            img_cols = st.columns(2)
+                                            with img_cols[0]:
+                                                st.image(base64_to_image(fotos[idx_img]), use_container_width=True)
+                                            if idx_img + 1 < len(fotos):
+                                                with img_cols[1]:
+                                                    st.image(base64_to_image(fotos[idx_img+1]), use_container_width=True)
                                     else:
                                         st.caption("*(Dokumen visual tidak tersedia)*")
                                 with prev_col2:
@@ -608,7 +621,7 @@ with tab3:
     with col_export1:
         with st.container(border=True):
             st.markdown("### 📄 Ekspor Dokumen Resmi (Word)")
-            st.caption("Menghasilkan file `.docx` lengkap dengan tabel, foto, watermark, dan format laporan resmi PLN.")
+            st.caption("Menghasilkan file `.docx` lengkap dengan tabel, foto rasio 16:9, watermark, dan format laporan resmi PLN.")
             
             if st.button("Kompilasi Laporan (.docx)", type="primary", use_container_width=True):
                 db_data = get_all_data()
@@ -691,13 +704,21 @@ with tab3:
                         
                         fotos = item.get("foto_b64_list", [])
                         if fotos:
+                            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                             for idx_img, img_b64 in enumerate(fotos):
-                                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                                 run_img = p_img.add_run()
-                                # PERBAIKAN UKURAN GAMBAR: LEBAR 2.2 INCI AGAR HEMAT KERTAS SAAT DI-PRINT
-                                run_img.add_picture(base64_to_image(img_b64), width=Inches(2.2)) 
+                                # Memasukkan foto dengan lebar pas untuk 2 gambar berdampingan di Word
+                                run_img.add_picture(base64_to_image(img_b64), width=Inches(2.15)) 
+                                
+                                # Logika Penempatan 2 Foto Per Baris
                                 if idx_img < len(fotos) - 1:
-                                    p_img = keg_cell.add_paragraph()
+                                    if (idx_img + 1) % 2 == 0:
+                                        # Jika sudah 2 foto, buat baris baru di Word
+                                        p_img = keg_cell.add_paragraph()
+                                        p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                    else:
+                                        # Jika baru 1 foto, beri spasi pemisah sebelum foto kedua
+                                        run_img.add_text("   ")
                         
                         for cell in row_cells:
                             for paragraph in cell.paragraphs:
