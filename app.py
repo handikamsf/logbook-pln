@@ -608,7 +608,7 @@ with tab3:
     with col_export1:
         with st.container(border=True):
             st.markdown("### 📄 Ekspor Dokumen Resmi (Word)")
-            st.caption("Menghasilkan file `.docx` lengkap dengan tabel, foto rasio 16:9, watermark, dan format laporan resmi PLN.")
+            st.caption("Menghasilkan file `.docx` lengkap dengan tabel, foto, watermark, dan format laporan resmi PLN.")
             
             if st.button("Kompilasi Laporan (.docx)", type="primary", use_container_width=True):
                 db_data = get_all_data()
@@ -694,7 +694,8 @@ with tab3:
                             for idx_img, img_b64 in enumerate(fotos):
                                 p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                                 run_img = p_img.add_run()
-                                run_img.add_picture(base64_to_image(img_b64), width=Inches(3.5)) 
+                                # PERBAIKAN UKURAN GAMBAR: LEBAR 2.2 INCI AGAR HEMAT KERTAS SAAT DI-PRINT
+                                run_img.add_picture(base64_to_image(img_b64), width=Inches(2.2)) 
                                 if idx_img < len(fotos) - 1:
                                     p_img = keg_cell.add_paragraph()
                         
